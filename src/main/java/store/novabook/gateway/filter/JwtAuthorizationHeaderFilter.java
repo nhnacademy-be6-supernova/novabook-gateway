@@ -4,7 +4,6 @@ import java.net.URI;
 import java.security.Key;
 import java.util.Date;
 import java.util.Set;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
