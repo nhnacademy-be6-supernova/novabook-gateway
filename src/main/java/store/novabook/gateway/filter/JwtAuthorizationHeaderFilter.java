@@ -4,6 +4,7 @@ import java.net.URI;
 import java.security.Key;
 import java.util.Date;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -44,15 +45,13 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 	public GatewayFilter apply(Config config) {
 		return (exchange, chain) -> {
 			//TODO#3 JWT 검증 필터입니다.
-			log.debug("jwt-validation-filter");
 			ServerHttpRequest request = exchange.getRequest();
-			// String secretKey = "736319af8c5322ec3c604dacaeca1c194a1cbaf05bf1ca78eed562c321517d7e86c7311403b9ce026e8cd438a0814d713ea410145f06e3c4b966d7511c16e75a";
 
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
 				//TODO#3-1 Header에 Authorization 존재하지 않는다면 적절한 예외처리를 합니다.
-				// exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
-				// exchange.getResponse().getHeaders().setLocation(URI.create("http://127.0.0.1:9000/error"));
-				// return exchange.getResponse().setComplete();
+				exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
+				exchange.getResponse().getHeaders().setLocation(URI.create("http://127.0.0.1:9000/error"));
+				return exchange.getResponse().setComplete();
 			} else {
 
 				//TODO#3-2 AccessToken jjwt 라이브러리를 사용하여 검증 구현하기
