@@ -5,16 +5,16 @@ spring:
 
   cloud:
     gateway:
-        routes:
-          - id: store
-            uri: lb://store
-            predicates:
-                  - Path=/api/v1/store/**
+      routes:
+        - id: store-service
+          uri: lb://store
+          predicates:
+            - Path=/api/v1/store/**
 
-          - id: coupon
-            uri: http://{}:8070
-            predicates:
-                  - Path=/api/v1/coupon/**
+        - id: coupon-service
+          uri: lb://coupon
+          predicates:
+            - Path=/api/v1/coupon/**
 
 
 
