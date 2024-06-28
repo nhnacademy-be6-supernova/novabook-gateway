@@ -47,10 +47,10 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 			ServerHttpRequest request = exchange.getRequest();
 
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-				//TODO#3-1 Header에 Authorization 존재하지 않는다면 적절한 예외처리를 합니다.
-				exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
-				exchange.getResponse().getHeaders().setLocation(URI.create("http://127.0.0.1:9000/error"));
-				return exchange.getResponse().setComplete();
+				// //TODO#3-1 Header에 Authorization 존재하지 않는다면 적절한 예외처리를 합니다.
+				// exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
+				// exchange.getResponse().getHeaders().setLocation(URI.create("http://127.0.0.1:9000/error"));
+				// return exchange.getResponse().setComplete();
 			} else {
 
 				//TODO#3-2 AccessToken jjwt 라이브러리를 사용하여 검증 구현하기
