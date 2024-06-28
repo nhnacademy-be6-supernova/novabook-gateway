@@ -7,6 +7,7 @@ pipeline {
         REPO_URL = 'https://github.com/nhnacademy-be6-supernova/novabook-gateway.git'
         ARTIFACT_NAME = 'gateway-0.0.1-SNAPSHOT.jar'
         JAVA_OPTS = '-XX:+EnableDynamicAgentLoading -XX:+UseParallelGC'
+        SPRING_PROFILES_ACTIVE = 'prod'
     }
 
     tools {
@@ -51,8 +52,7 @@ pipeline {
         }
         stage('Deploy to Front Server') {
             steps {
-                deployToServer(FRONT_SERVER, DEPLOY_PATH, 9777)
-                showLogs(FRONT_SERVER, DEPLOY_PATH)
+                deployToServer(FRONT_SERVER, DEPLOY_PATH, 9777, SPRING_PROFILES_ACTIVE)
             }
         }
         stage('Verification') {
@@ -71,12 +71,12 @@ pipeline {
     }
 }
 
-def deployToServer(server, deployPath, port) {
+def deployToServer(server, deployPath, port, profile) {
     withCredentials([sshUserPrivateKey(credentialsId: 'nova-dev', keyFileVariable: 'PEM_FILE')]) {
         sh """
         scp -o StrictHostKeyChecking=no -i \$PEM_FILE target/${ARTIFACT_NAME} ${server}:${deployPath}
         ssh -o StrictHostKeyChecking=no -i \$PEM_FILE ${server} 'fuser -k ${port}/tcp || true'
-        ssh -o StrictHostKeyChecking=no -i \$PEM_FILE ${server} 'nohup /home/jdk-21.0.3+9/bin/java -jar ${deployPath}/${ARTIFACT_NAME} --server.port=${port} ${env.JAVA_OPTS} > ${deployPath}/gateway_app.log 2>&1 &'
+        ssh -o StrictHostKeyChecking=no -i \$PEM_FILE ${server} 'nohup /home/jdk-21.0.3+9/bin/java -jar ${deployPath}/${ARTIFACT_NAME} --spring.profiles.active=${profile} --server.port=${port} ${env.JAVA_OPTS} > ${deployPath}/gateway_app.log 2>&1 &'
         """
     }
 }
