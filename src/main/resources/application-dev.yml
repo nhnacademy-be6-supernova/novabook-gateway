@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: gateway-service
+
+
+  cloud:
+    gateway:
+        routes:
+          - id: store-service
+            uri: lb://store
+            predicates:
+                  - Path=/api/v1/store/**
+
+          - id: coupon-service
+            uri: lb://coupon
+            predicates:
+                  - Path=/api/v1/coupon/**
+
+
+
+# 유레카에 gateway 등록
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defalutZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
+
+
+# 게이트 웨이 포트
+server:
+  port: 9777
+
+jwt:
+  header: Authorization
+  secret: vzxvgsjdgdfjgfdskgjdsfkgjdsfkgkdsfgjdfkgjdfsgdklgjadgslkjgsaklj
+  token-validity-in-seconds: 86400 # ttl (?)
