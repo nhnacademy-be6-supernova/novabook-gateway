@@ -2,6 +2,10 @@ spring:
   application:
     name: gateway-service
 
+  profiles:
+    active: prod
+
+
 
 # 유레카에 gateway 등록
 eureka:
@@ -21,3 +25,16 @@ jwt:
   header: Authorization
   secret: vzxvgsjdgdfjgfdskgjdsfkgjdsfkgkdsfgjdfkgjdfsgdklgjadgslkjgsaklj
   token-validity-in-seconds: 86400 # ttl (?)
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
