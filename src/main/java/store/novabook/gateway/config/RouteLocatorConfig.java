@@ -39,7 +39,7 @@ public class RouteLocatorConfig {
 			.route("store", p -> p.path("/api/v1/store/**")
 				.and()
 				.weight("store", 1)
-				// .filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
+				.filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
 				.uri("http://127.0.0.1:8090")
 			)
 
