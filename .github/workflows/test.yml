@@ -1,6 +1,7 @@
 name: maven 테스트
 
 on:
+  push:
   pull_request:
     branches:
       - develop
