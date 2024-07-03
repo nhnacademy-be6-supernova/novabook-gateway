@@ -71,11 +71,9 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 					String role = jwtUtil.getRole(accessToken);
 
 					exchange.mutate().request(builder -> {
-						builder.header("X-USER-ID",username);
+						builder.header("X-USER-ID", username);
 						builder.header("X-USER-ROLE", role);
 					});
-
-
 
 				} catch (ExpiredJwtException e) {
 					String redirectUrl = "http://localhost:8080/api/v1/front/new-token";
