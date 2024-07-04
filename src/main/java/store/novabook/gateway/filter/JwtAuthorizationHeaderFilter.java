@@ -18,23 +18,29 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 import store.novabook.gateway.config.JWTUtil;
+import store.novabook.gateway.entity.Auth;
+import store.novabook.gateway.service.AuthService;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config> {
 
 	Set<String> tokenBlacklistStore = new java.util.HashSet<>();
-	private final String secret;
+	@Value("${jwt.secret}")
+	private String secret;
 	private final JWTUtil jwtUtil;
+	private final AuthService authService;
 
-	public JwtAuthorizationHeaderFilter(@Value("${jwt.secret}") String secret, JWTUtil jwtUtil) {
-		super(Config.class);
-		this.secret = secret;
-		this.jwtUtil = jwtUtil;
-	}
+	// public JwtAuthorizationHeaderFilter(@Value("${jwt.secret}") String secret, JWTUtil jwtUtil) {
+	// 	super(Config.class);
+	// 	this.secret = secret;
+	// 	this.jwtUtil = jwtUtil;
+	// }
 
 	public static class Config {
 		// application.properties 파일에서 지정한 filer의 Argument값을 받는 부분
@@ -69,6 +75,14 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 
 					String username = jwtUtil.getUsername(accessToken);
 					String role = jwtUtil.getRole(accessToken);
+
+					if (!authService.existsByUuid(username)) {
+						String redirectUrl = "http://localhost:8080/login";
+
+						exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
+						exchange.getResponse().getHeaders().set(HttpHeaders.LOCATION, redirectUrl);
+						return exchange.getResponse().setComplete();
+					}
 
 					exchange.mutate().request(builder -> {
 						builder.header("X-USER-ID", username);
