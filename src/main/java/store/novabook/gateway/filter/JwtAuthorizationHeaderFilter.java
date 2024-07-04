@@ -61,7 +61,19 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 				log.error("No Authorization, Refresh header");
 			} else {
 
-				//이미 로그아웃된 Token 인지? - Black List 관리
+				Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+				try {
+					String refreshToken = "";
+					if (request.getHeaders().containsKey("Refresh")) {
+						refreshToken = request.getHeaders().get("Refresh").get(0).replace("Bearer ", "");
+					} else {
+						throw new ExpiredJwtException(null, null, "No Refresh header");
+					}
+					Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(refreshToken);
+				} catch (ExpiredJwtException e) {
+					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+					return exchange.getResponse().setComplete();
+				}
 
 				try {
 					String accessToken = "";
@@ -70,8 +82,10 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 					} else {
 						throw new ExpiredJwtException(null, null, "No Authorization header");
 					}
-					Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+
 					Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken);
+
+					// Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws();
 
 					String username = jwtUtil.getUsername(accessToken);
 					String role = jwtUtil.getRole(accessToken);
