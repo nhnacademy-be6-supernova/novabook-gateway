@@ -5,6 +5,21 @@ spring:
   profiles:
     active: dev
 
+  cloud:
+    gateway:
+        routes:
+          - id: store
+            uri: lb://STORE
+            predicates:
+                  - Path=/api/v1/store/**
+
+          - id: coupon
+            uri: http://localhost:8070
+            predicates:
+                  - Path=/api/v1/coupon/**
+  config:
+    activate:
+      on-profile:
 
 
 # 유레카에 gateway 등록
@@ -17,6 +32,8 @@ eureka:
 
 
 
+
+
 # 게이트 웨이 포트
 server:
   port: 9777
@@ -25,6 +42,7 @@ jwt:
   header: Authorization
   secret: vzxvgsjdgdfjgfdskgjdsfkgjdsfkgkdsfgjdfkgjdfsgdklgjadgslkjgsaklj
   token-validity-in-seconds: 86400 # ttl (?)
+
 
 
 ---
