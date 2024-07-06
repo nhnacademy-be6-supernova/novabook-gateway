@@ -1,15 +1,12 @@
 package store.novabook.gateway.filter;
 
 import java.security.Key;
-import java.util.List;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 
@@ -20,9 +17,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Mono;
 import store.novabook.gateway.config.JWTUtil;
-import store.novabook.gateway.entity.Auth;
 import store.novabook.gateway.service.AuthService;
 
 @Component
@@ -30,25 +25,12 @@ import store.novabook.gateway.service.AuthService;
 @RequiredArgsConstructor
 public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config> {
 
-	Set<String> tokenBlacklistStore = new java.util.HashSet<>();
 	@Value("${jwt.secret}")
 	private String secret;
 	private final JWTUtil jwtUtil;
 	private final AuthService authService;
 
-	// public JwtAuthorizationHeaderFilter(@Value("${jwt.secret}") String secret, JWTUtil jwtUtil) {
-	// 	super(Config.class);
-	// 	this.secret = secret;
-	// 	this.jwtUtil = jwtUtil;
-	// }
-
 	public static class Config {
-		// application.properties 파일에서 지정한 filer의 Argument값을 받는 부분
-	}
-
-	public void logout(String token) {
-		// tokenBlacklistStore는 토큰 블랙리스트를 저장하는 저장소입니다.
-		tokenBlacklistStore.add(token);
 	}
 
 	@Override
@@ -84,8 +66,6 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 					}
 
 					Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken);
-
-					// Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws();
 
 					String username = jwtUtil.getUsername(accessToken);
 					String role = jwtUtil.getRole(accessToken);

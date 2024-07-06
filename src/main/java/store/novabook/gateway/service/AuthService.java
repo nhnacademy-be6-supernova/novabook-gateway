@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import store.novabook.gateway.entity.Auth;
+import store.novabook.gateway.entity.AuthenticationInfo;
 
 @Service
 @Transactional
@@ -14,17 +14,17 @@ public class AuthService {
 
 	private final RedisTemplate<String, Object> redisTemplate;
 
-	public void saveAuth(Auth auth) {
-		if (Boolean.TRUE.equals(redisTemplate.hasKey(auth.getUuid()))) {
-			throw new IllegalArgumentException("Auth already exists for this uuid: " + auth.getUuid());
+	public void saveAuth(AuthenticationInfo authenticationInfo) {
+		if (Boolean.TRUE.equals(redisTemplate.hasKey(authenticationInfo.getUuid()))) {
+			throw new IllegalArgumentException("Auth already exists for this uuid: " + authenticationInfo.getUuid());
 		}
-		redisTemplate.opsForValue().set(auth.getUuid(), auth);
+		redisTemplate.opsForValue().set(authenticationInfo.getUuid(), authenticationInfo);
 	}
 
-	public Auth getAuth(String uuid) {
+	public AuthenticationInfo getAuth(String uuid) {
 		Object object = redisTemplate.opsForValue().get(uuid);
-		if (object instanceof Auth) {
-			return (Auth)object;
+		if (object instanceof AuthenticationInfo) {
+			return (AuthenticationInfo)object;
 		} else {
 			throw new IllegalArgumentException("No auth found with uuid: " + uuid);
 		}
@@ -37,7 +37,7 @@ public class AuthService {
 	public Boolean deleteAuth(String uuid) {
 		Boolean delete;
 		Object object = redisTemplate.opsForValue().get(uuid);
-		if (object instanceof Auth) {
+		if (object instanceof AuthenticationInfo) {
 			delete = redisTemplate.delete(uuid);
 		} else {
 			throw new IllegalArgumentException("No auth found with uuid: " + uuid);
