@@ -48,6 +48,9 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 					String refreshToken = "";
 					if (request.getHeaders().containsKey("Refresh")) {
 						refreshToken = request.getHeaders().get("Refresh").get(0).replace("Bearer ", "");
+						if(refreshToken.equals("null") || refreshToken.isEmpty()) {
+							throw new ExpiredJwtException(null, null, "Refresh token is null");
+						}
 					} else {
 						throw new ExpiredJwtException(null, null, "No Refresh header");
 					}
