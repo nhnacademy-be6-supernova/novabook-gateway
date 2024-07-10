@@ -2,7 +2,6 @@ package store.novabook.gateway.controller.swtich;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.List;
 
 import org.springframework.cloud.gateway.event.RefreshRoutesEvent;
 import org.springframework.cloud.gateway.filter.FilterDefinition;
@@ -30,37 +29,35 @@ public class CouponController {
 	private final ApplicationEventPublisher publisher;
 
 	@PostMapping("/coupon/switch")
-	public ResponseEntity<String> switchRoutes(@RequestParam("target") String target) {
-		List<RouteDefinition> definitions = routeDefinitionLocator.getRouteDefinitions().collectList().block();
-		if (definitions != null) {
-			definitions.forEach(route -> {
+	public Mono<ResponseEntity<String>> switchRoutes(@RequestParam("target") String target) {
+		return routeDefinitionLocator.getRouteDefinitions().collectList().flatMap(definitions -> {
+			Mono<Void> deleteRoutes = Mono.empty();
+			for (RouteDefinition route : definitions) {
 				if (route.getId().equals("coupon-blue") || route.getId().equals("coupon-green")) {
-					try {
-						routeDefinitionWriter.delete(Mono.just(route.getId())).block();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+					deleteRoutes = deleteRoutes.then(
+						routeDefinitionWriter.delete(Mono.just(route.getId())).onErrorResume(e -> Mono.empty()));
 				}
+			}
+
+			return deleteRoutes.then(Mono.defer(() -> {
+				RouteDefinition newRoute = new RouteDefinition();
+				if ("green".equals(target)) {
+					newRoute.setId("coupon-green");
+					newRoute.setUri(URI.create("http://127.0.0.1:8071"));
+				} else {
+					newRoute.setId("coupon-blue");
+					newRoute.setUri(URI.create("http://127.0.0.1:8070"));
+				}
+				newRoute.setPredicates(Collections.singletonList(new PredicateDefinition("Path=/api/v1/coupon/**")));
+				newRoute.setFilters(Collections.singletonList(new FilterDefinition("StripPrefix=1")));
+
+				return routeDefinitionWriter.save(Mono.just(newRoute))
+					.then(Mono.fromRunnable(() -> publisher.publishEvent(new RefreshRoutesEvent(this))))
+					.thenReturn(ResponseEntity.ok("Routes switched to " + target));
+			})).onErrorResume(e -> {
+				e.printStackTrace();
+				return Mono.just(ResponseEntity.status(500).body("Failed to switch routes: " + e.getMessage()));
 			});
-		}
-
-		if ("green".equals(target)) {
-			RouteDefinition greenRoute = new RouteDefinition();
-			greenRoute.setId("coupon-green");
-			greenRoute.setUri(URI.create("http://127.0.0.1:8071"));
-			greenRoute.setPredicates(Collections.singletonList(new PredicateDefinition("Path=/api/v1/coupon/**")));
-			greenRoute.setFilters(Collections.singletonList(new FilterDefinition("StripPrefix=1")));
-			routeDefinitionWriter.save(Mono.just(greenRoute)).block();
-		} else {
-			RouteDefinition blueRoute = new RouteDefinition();
-			blueRoute.setId("coupon-blue");
-			blueRoute.setUri(URI.create("http://127.0.0.1:8070"));
-			blueRoute.setPredicates(Collections.singletonList(new PredicateDefinition("Path=/api/v1/coupon/**")));
-			blueRoute.setFilters(Collections.singletonList(new FilterDefinition("StripPrefix=1")));
-			routeDefinitionWriter.save(Mono.just(blueRoute)).block();
-		}
-
-		publisher.publishEvent(new RefreshRoutesEvent(this));
-		return ResponseEntity.ok("Routes switched to " + target);
+		});
 	}
 }
