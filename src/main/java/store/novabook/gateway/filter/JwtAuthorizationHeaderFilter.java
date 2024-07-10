@@ -1,5 +1,8 @@
 package store.novabook.gateway.filter;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -7,6 +10,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +19,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.ws.rs.core.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.novabook.gateway.config.JWTUtil;
@@ -37,7 +42,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 	public GatewayFilter apply(Config config) {
 		return (exchange, chain) -> {
 			ServerHttpRequest request = exchange.getRequest();
-
+			String refreshToken = "";
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION) && !request.getHeaders()
 				.containsKey("Refresh")) {
 				log.error("No Authorization, Refresh header");
@@ -45,7 +50,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 
 				Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
 				try {
-					String refreshToken = "";
+					refreshToken = "";
 					if (request.getHeaders().containsKey("Refresh")) {
 						refreshToken = request.getHeaders().get("Refresh").get(0).replace("Bearer ", "");
 						if(refreshToken.equals("null") || refreshToken.isEmpty()) {
@@ -87,15 +92,28 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 					});
 
 				} catch (ExpiredJwtException e) {
-					String redirectUrl = "http://localhost:8080/api/v1/front/new-token";
+					// String redirectUrl = "http://localhost:8080/api/v1/front/new-token";
 
-					exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
+
+					String encodedJwt = "";
+					try {
+						encodedJwt = URLEncoder.encode(refreshToken, StandardCharsets.UTF_8.toString());
+					} catch (UnsupportedEncodingException ex) {
+						throw new RuntimeException("Error encoding JWT", ex);
+					}
+
+					// redirectUrl에 PathVariable 값 포함
+					String redirectUrl = "http://localhost:8080/api/v1/front/new-token/" + encodedJwt;
+
 					exchange.getResponse().getHeaders().set(HttpHeaders.LOCATION, redirectUrl);
+					exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
 					return exchange.getResponse().setComplete();
 
 				} catch (JwtException e) {
 					// JWT 토큰이 유효하지 않은 경우, 401 Unauthorized 에러를 반환합니다.
 					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+
+					log.error("JwtException");
 					return exchange.getResponse().setComplete();
 				}
 			}
