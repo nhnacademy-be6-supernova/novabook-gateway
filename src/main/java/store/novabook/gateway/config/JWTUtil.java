@@ -4,7 +4,7 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
@@ -12,13 +12,16 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import store.novabook.gateway.util.KeyManagerUtil;
+import store.novabook.gateway.util.dto.JWTConfigDto;
 
 @Component
 public class JWTUtil {
 	private final SecretKey secretKey;
 
-	public JWTUtil(@Value("${jwt.secret}") String secret) {
-		byte[] keyBytes = Decoders.BASE64.decode(secret);
+	public JWTUtil(Environment env) {
+		JWTConfigDto jwtConfigDto = KeyManagerUtil.getJWTConfig(env);
+		byte[] keyBytes = Decoders.BASE64.decode(jwtConfigDto.secret());
 		this.secretKey = Keys.hmacShaKeyFor(keyBytes);
 	}
 
