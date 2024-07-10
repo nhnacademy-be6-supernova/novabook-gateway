@@ -5,13 +5,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 
@@ -20,8 +18,6 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.ws.rs.core.Cookie;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.novabook.gateway.config.JWTUtil;
 import store.novabook.gateway.service.AuthService;
@@ -56,21 +52,21 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 			} else {
 
 				Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
-				try {
-					refreshToken = "";
-					if (request.getHeaders().containsKey("Refresh")) {
-						refreshToken = request.getHeaders().get("Refresh").get(0).replace("Bearer ", "");
-						if (refreshToken.equals("null") || refreshToken.isEmpty()) {
-							throw new ExpiredJwtException(null, null, "Refresh token is null");
-						}
-					} else {
-						throw new ExpiredJwtException(null, null, "No Refresh header");
-					}
-					Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(refreshToken);
-				} catch (ExpiredJwtException e) {
-					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-					return exchange.getResponse().setComplete();
-				}
+				// try {
+				// 	refreshToken = "";
+				// 	if (request.getHeaders().containsKey("Refresh")) {
+				// 		refreshToken = request.getHeaders().get("Refresh").get(0).replace("Bearer ", "");
+				// 		if (refreshToken.equals("null") || refreshToken.isEmpty()) {
+				// 			throw new ExpiredJwtException(null, null, "Refresh token is null");
+				// 		}
+				// 	} else {
+				// 		throw new ExpiredJwtException(null, null, "No Refresh header");
+				// 	}
+				// 	Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(refreshToken);
+				// } catch (ExpiredJwtException e) {
+				// 	exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+				// 	return exchange.getResponse().setComplete();
+				// }
 
 				try {
 					String accessToken = "";
