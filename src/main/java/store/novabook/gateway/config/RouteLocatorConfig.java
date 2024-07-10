@@ -43,11 +43,13 @@ public class RouteLocatorConfig {
 				.uri("http://127.0.0.1:8090")
 			)
 
-			.route("coupon", p -> p.path("/api/v1/coupon/**")
-				.and()
-				.weight("coupon", 1)
+			.route("coupon-blue", p -> p.path("/api/v1/coupon/**")
 				.filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
 				.uri("http://127.0.0.1:8070")
+			)
+			.route("coupon-green", p -> p.path("/api/v1/coupon/**")
+				.filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
+				.uri("http://127.0.0.1:8071")
 			)
 
 			.build();

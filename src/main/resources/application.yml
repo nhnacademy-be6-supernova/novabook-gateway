@@ -27,8 +27,6 @@ eureka:
     service-url:
       defalutZone: http://localhost:8761/eureka
 
-
-
 # 게이트 웨이 포트
 server:
   port: 9777
@@ -38,7 +36,11 @@ jwt:
   secret: vzxvgsjdgdfjgfdskgjdsfkgjdsfkgkdsfgjdfkgjdfsgdklgjadgslkjgsaklj
   token-validity-in-seconds: 86400 # ttl (?)
 
-
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,pause,resume
 ---
 spring:
   config:
