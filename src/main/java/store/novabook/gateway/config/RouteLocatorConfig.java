@@ -32,7 +32,6 @@ public class RouteLocatorConfig {
 		// localhost 쓰지말고 127.0.0.1로 사용하기
 		return builder.routes()
 			.route("auth-service", p -> p.path("/auth/**")
-				// .filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
 				.uri("http://127.0.0.1:8778")
 			)
 

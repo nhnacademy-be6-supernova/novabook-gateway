@@ -45,28 +45,12 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 	public GatewayFilter apply(Config config) {
 		return (exchange, chain) -> {
 			ServerHttpRequest request = exchange.getRequest();
-			String refreshToken = "";
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION) && !request.getHeaders()
 				.containsKey("Refresh")) {
-				log.error("No Authorization, Refresh header");
+				log.debug("No Authorization, Refresh header");
 			} else {
 
 				Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
-				// try {
-				// 	refreshToken = "";
-				// 	if (request.getHeaders().containsKey("Refresh")) {
-				// 		refreshToken = request.getHeaders().get("Refresh").get(0).replace("Bearer ", "");
-				// 		if (refreshToken.equals("null") || refreshToken.isEmpty()) {
-				// 			throw new ExpiredJwtException(null, null, "Refresh token is null");
-				// 		}
-				// 	} else {
-				// 		throw new ExpiredJwtException(null, null, "No Refresh header");
-				// 	}
-				// 	Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(refreshToken);
-				// } catch (ExpiredJwtException e) {
-				// 	exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-				// 	return exchange.getResponse().setComplete();
-				// }
 
 				try {
 					String accessToken = "";
@@ -82,10 +66,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 					String role = jwtUtil.getRole(accessToken);
 
 					if (!authService.existsByUuid(username)) {
-						String redirectUrl = "http://localhost:8080/login";
-
 						exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
-						exchange.getResponse().getHeaders().set(HttpHeaders.LOCATION, redirectUrl);
 						return exchange.getResponse().setComplete();
 					}
 
@@ -95,25 +76,11 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 					});
 
 				} catch (ExpiredJwtException e) {
-					// String redirectUrl = "http://localhost:8080/api/v1/front/new-token";
 
-
-					String encodedJwt = "";
-					try {
-						encodedJwt = URLEncoder.encode(refreshToken, StandardCharsets.UTF_8.toString());
-					} catch (UnsupportedEncodingException ex) {
-						throw new RuntimeException("Error encoding JWT", ex);
-					}
-
-					// redirectUrl에 PathVariable 값 포함
-					String redirectUrl = "http://localhost:8080/api/v1/front/new-token/" + encodedJwt;
-
-					exchange.getResponse().getHeaders().set(HttpHeaders.LOCATION, redirectUrl);
 					exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
 					return exchange.getResponse().setComplete();
 
 				} catch (JwtException e) {
-					// JWT 토큰이 유효하지 않은 경우, 401 Unauthorized 에러를 반환합니다.
 					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
 
 					log.error("JwtException");
