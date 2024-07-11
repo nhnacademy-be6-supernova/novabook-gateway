@@ -3,6 +3,7 @@ package store.novabook.gateway.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
@@ -16,29 +17,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import lombok.RequiredArgsConstructor;
+import store.novabook.gateway.util.KeyManagerUtil;
+import store.novabook.gateway.util.dto.RedisConfigDto;
+
 @Configuration
 @EnableRedisRepositories
+@RequiredArgsConstructor
 public class RedisConfig {
-
-	@Value("${spring.data.redis.host}")
-	private String redisHost;
-
-	@Value("${spring.data.redis.port}")
-	private int redisPort;
-
-	@Value("${spring.data.redis.password}")
-	private String redisPassword;
-
-	@Value("${spring.data.redis.database}")
-	private int redisDatabase;
+	private final Environment environment;
 
 	@Bean
 	public RedisConnectionFactory redisConnectionFactory() {
+		RedisConfigDto configDto = KeyManagerUtil.getRedisConfig(environment);
+
 		RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-		config.setHostName(redisHost);
-		config.setPort(redisPort);
-		config.setPassword(RedisPassword.of(redisPassword));
-		config.setDatabase(redisDatabase);
+		config.setHostName(configDto.host());
+		config.setPort(configDto.port());
+		config.setPassword(RedisPassword.of(configDto.password()));
+		config.setDatabase(configDto.database());
 
 		return new LettuceConnectionFactory(config);
 	}

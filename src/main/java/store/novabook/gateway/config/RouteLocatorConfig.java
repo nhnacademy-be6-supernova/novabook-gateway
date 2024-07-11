@@ -28,32 +28,23 @@ public class RouteLocatorConfig {
 
 	@Bean
 	public RouteLocator myRoute(RouteLocatorBuilder builder) {
-
-		// localhost 쓰지말고 127.0.0.1로 사용하기
-		return builder.routes()
+    return builder.routes()
 			.route("auth-service", p -> p.path("/auth/**")
 				// .filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
-				.uri("http://127.0.0.1:8778"))
+				.uri("lb://AUTH-SERVICE"))
 
-			.route("store-blue", p -> p.path("/api/v1/store/**")
+			.route("store", p -> p.path("/api/v1/store/**")
 				.and()
 				.weight("store", 1)
 				.filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
-				.uri("http://127.0.0.1:8090"))
-			.route("store-green", p -> p.path("/api/v1/store/**")
-				.and()
-				.weight("store", 1)
-				.filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
-				.uri("http://127.0.0.1:8091"))
+				.uri("lb://STORE"))
 
-			.route("coupon-blue", p -> p.path("/api/v1/coupon/**")
+			.route("coupon", p -> p.path("/api/v1/coupon/**")
 				.filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
-				.uri("http://127.0.0.1:8070"))
-			.route("coupon-green", p -> p.path("/api/v1/coupon/**")
-				.filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
-				.uri("http://127.0.0.1:8071"))
+				.uri("lb://COUPON"))
 
 			.build();
+
 
 	}
 }
