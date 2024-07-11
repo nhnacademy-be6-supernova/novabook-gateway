@@ -28,8 +28,7 @@ public class RouteLocatorConfig {
 
 	@Bean
 	public RouteLocator myRoute(RouteLocatorBuilder builder) {
-
-		return builder.routes()
+    return builder.routes()
 			.route("auth-service", p -> p.path("/auth/**")
 				// .filters(f -> f.filter(jwtAuthorizationHeaderFilter.apply(new JwtAuthorizationHeaderFilter.Config())))
 				.uri("lb://AUTH-SERVICE"))
@@ -45,6 +44,7 @@ public class RouteLocatorConfig {
 				.uri("lb://COUPON"))
 
 			.build();
+
 
 	}
 }
