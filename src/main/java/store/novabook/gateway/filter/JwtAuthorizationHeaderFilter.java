@@ -1,8 +1,5 @@
 package store.novabook.gateway.filter;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 
 import org.springframework.cloud.gateway.filter.GatewayFilter;
