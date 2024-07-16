@@ -40,27 +40,14 @@ public class RedisConfig {
 	}
 
 	@Bean
-	public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
-		RedisTemplate<String, Object> template = new RedisTemplate<>();
-		template.setConnectionFactory(redisConnectionFactory);
-
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.registerModule(new JavaTimeModule());
-		BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
-			.allowIfBaseType(Object.class)
-			.build();
-
-		objectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL);
-
-		GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
-
-		template.setKeySerializer(new StringRedisSerializer());
-		template.setValueSerializer(serializer);
-		template.setHashKeySerializer(new StringRedisSerializer());
-		template.setHashValueSerializer(serializer);
-
-		template.afterPropertiesSet();
-		return template;
+	public RedisTemplate<String, Object> redisTemplate() {
+		RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+		redisTemplate.setKeySerializer(new StringRedisSerializer());
+		redisTemplate.setValueSerializer(new StringRedisSerializer());
+		redisTemplate.setConnectionFactory(redisConnectionFactory());
+		redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+		redisTemplate.setHashValueSerializer(new StringRedisSerializer());
+		return redisTemplate;
 	}
 
 }
