@@ -44,19 +44,10 @@ public class KeyManagerUtil {
 			new ParameterizedTypeReference<>() {
 			});
 
-		var body = getStringObjectMap(response);
-
-		String result = (String)body.get("secret");
-		if (result.isEmpty()) {
-			log.error("\"secret\" key is missing in responsxcle body");
-			log.error("{}", body);
-			throw new KeyManagerException("\"secret\" key is missing in responsxcle body");
-		}
-
-		return result;
+		return getStringObjectMap(response);
 	}
 
-	private static @NotNull Map<String, Object> getStringObjectMap(ResponseEntity<Map<String, Object>> response) {
+	private static String getStringObjectMap(ResponseEntity<Map<String, Object>> response) {
 		if (response.getBody() == null) {
 			throw new KeyManagerException("response.getBody() is null");
 		}
@@ -69,7 +60,14 @@ public class KeyManagerUtil {
 			throw new KeyManagerException(e.getMessage());
 		}
 
-		return body;
+		String result = (String)body.get("secret");
+		if (result.isEmpty()) {
+			log.error("\"secret\" key is missing in responsxcle body");
+			log.error("{}", body);
+			throw new KeyManagerException("\"secret\" key is missing in responsxcle body");
+		}
+
+		return result;
 	}
 
 	public static RedisConfigDto getRedisConfig(Environment environment) {
