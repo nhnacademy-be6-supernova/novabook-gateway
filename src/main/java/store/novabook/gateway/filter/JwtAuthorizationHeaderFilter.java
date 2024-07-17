@@ -1,6 +1,7 @@
 package store.novabook.gateway.filter;
 
 import java.security.Key;
+import java.util.Objects;
 
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -17,6 +18,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import store.novabook.gateway.config.JWTUtil;
+import store.novabook.gateway.entity.AccessTokenInfo;
 import store.novabook.gateway.service.AuthService;
 import store.novabook.gateway.util.KeyManagerUtil;
 import store.novabook.gateway.util.dto.JWTConfigDto;
@@ -41,10 +43,10 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 	@Override
 	public GatewayFilter apply(Config config) {
 		return (exchange, chain) -> {
+
 			ServerHttpRequest request = exchange.getRequest();
-			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION) && !request.getHeaders()
-				.containsKey("Refresh")) {
-				log.debug("No Authorization, Refresh header");
+			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+				log.debug("No Authorization");
 			} else {
 
 				Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
@@ -52,35 +54,35 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 				try {
 					String accessToken = "";
 					if (request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-						accessToken = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0).replace("Bearer ", "");
+						accessToken = Objects.requireNonNull(request.getHeaders().get(HttpHeaders.AUTHORIZATION))
+							.getFirst().replace("Bearer ", "");
 					} else {
-						throw new ExpiredJwtException(null, null, "No Authorization header");
+						throw new ExpiredJwtException(null, null, "No Authorization");
 					}
 
 					Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken);
 
-					String username = jwtUtil.getUsername(accessToken);
-					String role = jwtUtil.getRole(accessToken);
+					String uuid = jwtUtil.getUUID(accessToken);
 
-					if (!authService.existsByUuid(username)) {
+					AccessTokenInfo accessTokenInfo = authService.getAccessToken(uuid);
+
+					if (accessTokenInfo == null) {
 						exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
 						return exchange.getResponse().setComplete();
 					}
 
 					exchange.mutate().request(builder -> {
-						builder.header("X-USER-ID", username);
-						builder.header("X-USER-ROLE", role);
+						builder.header("X-USER-ID", Long.toString(accessTokenInfo.getMembersId()));
+						builder.header("X-USER-ROLE", accessTokenInfo.getRole());
 					});
 
 				} catch (ExpiredJwtException e) {
-
-					exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
-					return exchange.getResponse().setComplete();
-
-				} catch (JwtException e) {
+					log.error("ExpiredJwtException");
 					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-
+					return exchange.getResponse().setComplete();
+				} catch (JwtException e) {
 					log.error("JwtException");
+					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
 					return exchange.getResponse().setComplete();
 				}
 			}
