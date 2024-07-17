@@ -18,18 +18,32 @@ public class AccessTokenInfo implements Serializable {
 	String uuid;
 
 	@NotNull
+	String refreshTokenUUID;
+
+	@NotNull
+	long membersId;
+
+	@NotNull
+	private String role;
+
+	@NotNull
 	LocalDateTime expirationTime;
 
 	@NotNull
 	LocalDateTime createdTime;
 
-	public AccessTokenInfo(String uuid, LocalDateTime expirationTime, LocalDateTime createdTime) {
+	public AccessTokenInfo(String uuid, String refreshTokenUUID, long membersId, String role,
+		LocalDateTime expirationTime, LocalDateTime createdTime) {
 		this.uuid = uuid;
+		this.refreshTokenUUID = refreshTokenUUID;
+		this.membersId = membersId;
+		this.role = role;
 		this.expirationTime = expirationTime;
 		this.createdTime = createdTime;
 	}
 
-	public static AccessTokenInfo of(String uuid, LocalDateTime expirationTime) {
-		return new AccessTokenInfo(uuid, expirationTime, LocalDateTime.now());
+	public static AccessTokenInfo of(String uuid, String refreshTokenUUID, long membersId, String role,
+		LocalDateTime expirationTime) {
+		return new AccessTokenInfo(uuid, refreshTokenUUID, membersId, role, expirationTime, LocalDateTime.now());
 	}
 }

@@ -4,8 +4,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.RequiredArgsConstructor;
-import store.novabook.gateway.entity.AuthenticationInfo;
+import store.novabook.gateway.entity.AccessTokenInfo;
 
 @Service
 @Transactional
@@ -13,35 +15,19 @@ import store.novabook.gateway.entity.AuthenticationInfo;
 public class AuthService {
 
 	private final RedisTemplate<String, Object> redisTemplate;
+	private final ObjectMapper objectMapper;
 
-	public void saveAuth(AuthenticationInfo authenticationInfo) {
-		if (Boolean.TRUE.equals(redisTemplate.hasKey(authenticationInfo.getUuid()))) {
-			throw new IllegalArgumentException("Auth already exists for this uuid: " + authenticationInfo.getUuid());
-		}
-		redisTemplate.opsForValue().set(authenticationInfo.getUuid(), authenticationInfo);
-	}
-
-	public AuthenticationInfo getAuth(String uuid) {
+	public AccessTokenInfo getAccessToken(String uuid) {
 		Object object = redisTemplate.opsForValue().get(uuid);
-		if (object instanceof AuthenticationInfo) {
-			return (AuthenticationInfo)object;
-		} else {
-			throw new IllegalArgumentException("No auth found with uuid: " + uuid);
+		if (object == null) {
+			return null;
+		}
+		try {
+			String jsonString = objectMapper.writeValueAsString(object);
+			return objectMapper.readValue(jsonString, AccessTokenInfo.class);
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Failed to deserialize access token with uuid: " + uuid, e);
 		}
 	}
 
-	public boolean existsByUuid(String uuid) {
-		return Boolean.TRUE.equals(redisTemplate.hasKey(uuid));
-	}
-
-	public Boolean deleteAuth(String uuid) {
-		Boolean delete;
-		Object object = redisTemplate.opsForValue().get(uuid);
-		if (object instanceof AuthenticationInfo) {
-			delete = redisTemplate.delete(uuid);
-		} else {
-			throw new IllegalArgumentException("No auth found with uuid: " + uuid);
-		}
-		return delete;
-	}
 }

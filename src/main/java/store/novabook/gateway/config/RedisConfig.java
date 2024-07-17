@@ -25,6 +25,7 @@ import store.novabook.gateway.util.dto.RedisConfigDto;
 @RequiredArgsConstructor
 public class RedisConfig {
 	private final Environment environment;
+	private final ObjectMapper objectMapper;
 
 	@Bean
 	public RedisConnectionFactory redisConnectionFactory() {
@@ -40,14 +41,12 @@ public class RedisConfig {
 	}
 
 	@Bean
-	public RedisTemplate<String, Object> redisTemplate() {
-		RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-		redisTemplate.setKeySerializer(new StringRedisSerializer());
-		redisTemplate.setValueSerializer(new StringRedisSerializer());
-		redisTemplate.setConnectionFactory(redisConnectionFactory());
-		redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-		redisTemplate.setHashValueSerializer(new StringRedisSerializer());
-		return redisTemplate;
+	public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+		RedisTemplate<String, Object> template = new RedisTemplate<>();
+		template.setConnectionFactory(connectionFactory);
+		template.setKeySerializer(new StringRedisSerializer());
+		template.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+		return template;
 	}
 
 }
