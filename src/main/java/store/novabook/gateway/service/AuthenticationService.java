@@ -12,7 +12,7 @@ import store.novabook.gateway.entity.AccessTokenInfo;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class AuthService {
+public class AuthenticationService {
 
 	private final RedisTemplate<String, Object> redisTemplate;
 	private final ObjectMapper objectMapper;

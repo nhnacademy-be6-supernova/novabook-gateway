@@ -29,7 +29,7 @@ public class KeyManagerUtil {
 
 		String appkey = environment.getProperty("nhn.cloud.keyManager.appkey");
 		String userId = environment.getProperty("nhn.cloud.keyManager.userAccessKey");
-		String secretKey = environment.getProperty("nhn.cloud.keyManager.secretAccessKey");
+		String secretKey = environment.getProperty("nhn.cloud.keyMan	ager.secretAccessKey");
 
 		RestTemplate restTemplate = new RestTemplate();
 		String baseUrl = "https://api-keymanager.nhncloudservice.com/keymanager/v1.2/appkey/{appkey}/secrets/{keyid}";
