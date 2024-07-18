@@ -46,7 +46,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 
 			ServerHttpRequest request = exchange.getRequest();
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-				log.debug("No Authorization");
+				log.info("No Authorization");
 			} else {
 
 				Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
