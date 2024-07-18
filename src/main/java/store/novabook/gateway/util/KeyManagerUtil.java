@@ -13,9 +13,12 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
+import store.novabook.gateway.exception.KeyManagerException;
 import store.novabook.gateway.util.dto.JWTConfigDto;
 import store.novabook.gateway.util.dto.RedisConfigDto;
-
+@Slf4j
 public class KeyManagerUtil {
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -38,12 +41,33 @@ public class KeyManagerUtil {
 		HttpEntity<String> entity = new HttpEntity<>(headers);
 
 		ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.GET, entity,
-			new ParameterizedTypeReference<Map<String, Object>>() {
+			new ParameterizedTypeReference<>() {
 			});
 
-		Map<String, String> body = (Map<String, String>)response.getBody().get("body");
+		return getStringObjectMap(response);
+	}
 
-		return body.get("secret");
+	private static String getStringObjectMap(ResponseEntity<Map<String, Object>> response) {
+		if (response.getBody() == null) {
+			throw new KeyManagerException("response.getBody() is null");
+		}
+		Object bodyObj = response.getBody().get("body");
+
+		Map<String, Object> body;
+		try {
+			body = TypeUtil.castMap(bodyObj, String.class, Object.class);
+		} catch (ClassCastException e) {
+			throw new KeyManagerException(e.getMessage());
+		}
+
+		String result = (String)body.get("secret");
+		if (result.isEmpty()) {
+			log.error("\"secret\" key is missing in responsxcle body");
+			log.error("{}", body);
+			throw new KeyManagerException("\"secret\" key is missing in responsxcle body");
+		}
+
+		return result;
 	}
 
 	public static RedisConfigDto getRedisConfig(Environment environment) {
@@ -52,7 +76,7 @@ public class KeyManagerUtil {
 			return objectMapper.readValue(getDataSource(environment, keyid), RedisConfigDto.class);
 		} catch (JsonProcessingException e) {
 			//오류처리
-			throw new RuntimeException(e);
+			throw new KeyManagerException(e.getMessage());
 		}
 	}
 
@@ -62,7 +86,7 @@ public class KeyManagerUtil {
 			return objectMapper.readValue(getDataSource(environment, keyid), JWTConfigDto.class);
 		} catch (JsonProcessingException e) {
 			//오류처리
-			throw new RuntimeException(e);
+			throw new KeyManagerException(e.getMessage());
 		}
 	}
 
