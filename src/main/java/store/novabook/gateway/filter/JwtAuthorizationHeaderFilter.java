@@ -19,7 +19,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import store.novabook.gateway.config.JWTUtil;
 import store.novabook.gateway.entity.AccessTokenInfo;
-import store.novabook.gateway.service.AuthService;
+import store.novabook.gateway.service.AuthenticationService;
 import store.novabook.gateway.util.KeyManagerUtil;
 import store.novabook.gateway.util.dto.JWTConfigDto;
 
@@ -28,12 +28,12 @@ import store.novabook.gateway.util.dto.JWTConfigDto;
 public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config> {
 
 	private final JWTUtil jwtUtil;
-	private final AuthService authService;
+	private final AuthenticationService authenticationService;
 	private final JWTConfigDto jwtConfig;
 
-	public JwtAuthorizationHeaderFilter(JWTUtil jwtUtil, AuthService authService, Environment env) {
+	public JwtAuthorizationHeaderFilter(JWTUtil jwtUtil, AuthenticationService authenticationService, Environment env) {
 		this.jwtUtil = jwtUtil;
-		this.authService = authService;
+		this.authenticationService = authenticationService;
 		this.jwtConfig = KeyManagerUtil.getJWTConfig(env);
 	}
 
@@ -64,7 +64,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 
 					String uuid = jwtUtil.getUUID(accessToken);
 
-					AccessTokenInfo accessTokenInfo = authService.getAccessToken(uuid);
+					AccessTokenInfo accessTokenInfo = authenticationService.getAccessToken(uuid);
 
 					if (accessTokenInfo == null) {
 						exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
