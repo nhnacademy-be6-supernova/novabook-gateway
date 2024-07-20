@@ -16,7 +16,6 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.novabook.gateway.config.JWTUtil;
 import store.novabook.gateway.entity.AccessTokenInfo;
@@ -46,7 +45,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 
 			ServerHttpRequest request = exchange.getRequest();
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-				log.debug("No Authorization");
+				log.info("No Authorization");
 			} else {
 
 				Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
@@ -64,7 +63,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 
 					String uuid = jwtUtil.getUUID(accessToken);
 
-					AccessTokenInfo accessTokenInfo = authService.getAccessToken(uuid);
+					AccessTokenInfo accessTokenInfo = authenticationService.getAccessToken(uuid);
 
 					if (accessTokenInfo == null) {
 						exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
