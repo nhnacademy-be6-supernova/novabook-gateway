@@ -11,8 +11,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import lombok.RequiredArgsConstructor;
 import store.novabook.gateway.util.KeyManagerUtil;
@@ -27,12 +30,15 @@ public class RedisConfig {
 
 	@Bean
 	public RedisConnectionFactory redisConnectionFactory() {
-		RedisConfigDto configDto = KeyManagerUtil.getRedisConfig(environment);
+		RestTemplate restTemplate = new RestTemplate();
+		RedisConfigDto configDto = KeyManagerUtil.getRedisConfig(environment, restTemplate);
+
 		RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
 		config.setHostName(configDto.host());
 		config.setPort(configDto.port());
 		config.setPassword(RedisPassword.of(configDto.password()));
 		config.setDatabase(configDto.database());
+
 		return new LettuceConnectionFactory(config);
 	}
 
