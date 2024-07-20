@@ -38,6 +38,9 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 	}
 
 	public static class Config {
+		public void init() {
+			log.info("init");
+		}
 	}
 
 	@Override
@@ -47,44 +50,40 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 			ServerHttpRequest request = exchange.getRequest();
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
 				log.info("No Authorization");
-			} else {
+				return chain.filter(exchange);
+			}
+			Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
+			try {
+				String accessToken = "";
+				if (request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+					accessToken = Objects.requireNonNull(request.getHeaders().get(HttpHeaders.AUTHORIZATION))
+						.getFirst().replace("Bearer ", "");
+				} else {
+					throw new ExpiredJwtException(null, null, "No Authorization");
+				}
 
-				Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
+				Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken);
+				String uuid = jwtUtil.getUUID(accessToken);
+				AccessTokenInfo accessTokenInfo = authenticationService.getAccessToken(uuid);
 
-				try {
-					String accessToken = "";
-					if (request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-						accessToken = Objects.requireNonNull(request.getHeaders().get(HttpHeaders.AUTHORIZATION))
-							.getFirst().replace("Bearer ", "");
-					} else {
-						throw new ExpiredJwtException(null, null, "No Authorization");
-					}
-
-					Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken);
-
-					String uuid = jwtUtil.getUUID(accessToken);
-
-					AccessTokenInfo accessTokenInfo = authenticationService.getAccessToken(uuid);
-
-					if (accessTokenInfo == null) {
-						exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
-						return exchange.getResponse().setComplete();
-					}
-
-					exchange.mutate().request(builder -> {
-						builder.header("X-USER-ID", Long.toString(accessTokenInfo.getMembersId()));
-						builder.header("X-USER-ROLE", accessTokenInfo.getRole());
-					});
-
-				} catch (ExpiredJwtException e) {
-					log.error("ExpiredJwtException");
-					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-					return exchange.getResponse().setComplete();
-				} catch (JwtException e) {
-					log.error("JwtException");
-					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+				if (accessTokenInfo == null) {
+					exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
 					return exchange.getResponse().setComplete();
 				}
+
+				log.info("accessTokenInfo: {}", accessTokenInfo);
+				exchange.mutate().request(builder -> {
+					builder.header("X-USER-ID", Long.toString(accessTokenInfo.getMembersId()));
+					builder.header("X-USER-ROLE", accessTokenInfo.getRole());
+				});
+			} catch (ExpiredJwtException e) {
+				log.error("ExpiredJwtException");
+				exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+				return exchange.getResponse().setComplete();
+			} catch (JwtException e) {
+				log.error("JwtException");
+				exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+				return exchange.getResponse().setComplete();
 			}
 
 			return chain.filter(exchange);

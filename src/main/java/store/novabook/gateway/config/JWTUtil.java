@@ -1,14 +1,11 @@
 package store.novabook.gateway.config;
 
-import java.util.Date;
-
 import javax.crypto.SecretKey;
 
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;

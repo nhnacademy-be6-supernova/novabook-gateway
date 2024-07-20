@@ -13,8 +13,6 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import lombok.RequiredArgsConstructor;
 import store.novabook.gateway.util.KeyManagerUtil;
@@ -30,13 +28,11 @@ public class RedisConfig {
 	@Bean
 	public RedisConnectionFactory redisConnectionFactory() {
 		RedisConfigDto configDto = KeyManagerUtil.getRedisConfig(environment);
-
 		RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
 		config.setHostName(configDto.host());
 		config.setPort(configDto.port());
 		config.setPassword(RedisPassword.of(configDto.password()));
 		config.setDatabase(configDto.database());
-
 		return new LettuceConnectionFactory(config);
 	}
 
