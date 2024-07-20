@@ -16,6 +16,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.novabook.gateway.config.JWTUtil;
 import store.novabook.gateway.entity.AccessTokenInfo;
@@ -25,23 +26,22 @@ import store.novabook.gateway.util.dto.JWTConfigDto;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config> {
 
 	private final JWTUtil jwtUtil;
 	private final AuthService authService;
-	private final JWTConfigDto jwtConfig;
-
-	public JwtAuthorizationHeaderFilter(JWTUtil jwtUtil, AuthService authService, Environment env) {
-		this.jwtUtil = jwtUtil;
-		this.authService = authService;
-		this.jwtConfig = KeyManagerUtil.getJWTConfig(env);
-	}
+	private JWTConfigDto jwtConfig;
+	private final Environment env;
 
 	public static class Config {
 	}
 
 	@Override
 	public GatewayFilter apply(Config config) {
+		if (Objects.isNull(jwtConfig)) {
+			this.jwtConfig = KeyManagerUtil.getJWTConfig(env);
+		}
 		return (exchange, chain) -> {
 
 			ServerHttpRequest request = exchange.getRequest();
