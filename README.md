@@ -1,6 +1,7 @@
-# Novabook Gateway
-
-Client 요청은 Gateway을 거쳐 핵심 서버인 Store로 로드 밸런싱 합니다.
+Novabook Gateway
+===========
+* Client 모든 요청은 Gateway을 거쳐 핵심 서버인 Store로 로드 밸런싱 합니다.
+* Gateway에서 필터를 활용하여 JWT토큰 인가 및 블랙리스트 관리(로그아웃)
 
 
 
