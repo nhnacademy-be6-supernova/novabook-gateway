@@ -29,18 +29,21 @@ import store.novabook.gateway.util.dto.JWTConfigDto;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config> implements
+public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config>
+	implements
 	InitializingBean {
 
 	private final AuthenticationService authenticationService;
 	private final JWTUtil jwtUtil;
 	private final Environment env;
 	private JWTConfigDto jwtConfig;
+	private Key key;
 
 	@Override
 	public void afterPropertiesSet() {
 		RestTemplate restTemplate = new RestTemplate();
 		this.jwtConfig = KeyManagerUtil.getJWTConfig(env, restTemplate);
+		key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
 	}
 
 	public static class Config {
@@ -52,13 +55,11 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 	@Override
 	public GatewayFilter apply(Config config) {
 		return (exchange, chain) -> {
-
 			ServerHttpRequest request = exchange.getRequest();
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
 				log.info("No Authorization");
 				return chain.filter(exchange);
 			}
-			Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
 			try {
 				String accessToken = "";
 				if (request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
