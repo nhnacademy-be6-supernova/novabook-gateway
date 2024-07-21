@@ -1,6 +1,7 @@
 package store.novabook.gateway.util;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
@@ -24,14 +25,14 @@ public class KeyManagerUtil {
 	private KeyManagerUtil() {
 	}
 
-	private static String getDataSource(Environment environment, String keyid, RestTemplate restTemplate) {
+	private static String getDataSource(Environment environment, String keyId, RestTemplate restTemplate) {
 
 		String appkey = environment.getProperty("nhn.cloud.keyManager.appkey");
 		String userId = environment.getProperty("nhn.cloud.keyManager.userAccessKey");
 		String secretKey = environment.getProperty("nhn.cloud.keyManager.secretAccessKey");
 
-		String baseUrl = "https://api-keymanager.nhncloudservice.com/keymanager/v1.2/appkey/{appkey}/secrets/{keyid}";
-		String url = baseUrl.replace("{appkey}", appkey).replace("{keyid}", keyid);
+		String baseUrl = "https://api-keymanager.nhncloudservice.com/keymanager/v1.2/appkey/{appkey}/secrets/{keyId}";
+		String url = baseUrl.replace("{appkey}", Objects.requireNonNull(appkey)).replace("{keyId}", keyId);
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("X-TC-AUTHENTICATION-ID", userId);
 		headers.set("X-TC-AUTHENTICATION-SECRET", secretKey);
@@ -59,7 +60,7 @@ public class KeyManagerUtil {
 		}
 
 		String result = (String)body.get("secret");
-		if (result.isEmpty()) {
+		if (Objects.isNull(result) || result.isEmpty()) {
 			log.error("\"secret\" key is missing in responsxcle body");
 			log.error("{}", body);
 			throw new KeyManagerException("\"secret\" key is missing in responsxcle body");
