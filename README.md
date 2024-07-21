@@ -14,7 +14,7 @@ Novabook Gateway
 
 <br>
 
-# 아키텍처 
+# 아키텍처 다이어그램
 ![스크린샷 2024-07-21 오후 7 30 33](https://github.com/user-attachments/assets/f306c6e5-9c40-4d13-ba66-108f44637264)
 
 
