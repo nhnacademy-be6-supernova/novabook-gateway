@@ -3,6 +3,7 @@ package store.novabook.gateway.filter;
 import java.security.Key;
 import java.util.Objects;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.env.Environment;
@@ -28,22 +29,25 @@ import store.novabook.gateway.util.dto.JWTConfigDto;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config> {
+public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config> implements
+	InitializingBean {
 
 	private final AuthenticationService authenticationService;
 	private final JWTUtil jwtUtil;
 	private final Environment env;
 	private JWTConfigDto jwtConfig;
 
+	@Override
+	public void afterPropertiesSet() {
+		RestTemplate restTemplate = new RestTemplate();
+		this.jwtConfig = KeyManagerUtil.getJWTConfig(env, restTemplate);
+	}
+
 	public static class Config {
 	}
 
 	@Override
 	public GatewayFilter apply(Config config) {
-		if (Objects.isNull(jwtConfig)) {
-			RestTemplate restTemplate = new RestTemplate();
-			this.jwtConfig = KeyManagerUtil.getJWTConfig(env, restTemplate);
-		}
 		return (exchange, chain) -> {
 
 			ServerHttpRequest request = exchange.getRequest();
