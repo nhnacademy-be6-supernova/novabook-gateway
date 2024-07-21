@@ -37,7 +37,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 
 	public static class Config {
 		public void init() {
-			log.info("init");
+			//nothing
 		}
 	}
 
@@ -73,11 +73,18 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 					return exchange.getResponse().setComplete();
 				}
 
-				log.info("accessTokenInfo: {}", accessTokenInfo);
-				exchange.mutate().request(builder -> {
-					builder.header("X-USER-ID", Long.toString(accessTokenInfo.getMembersId()));
-					builder.header("X-USER-ROLE", accessTokenInfo.getRole());
-				});
+				// log.info("accessTokenInfo: {}", accessTokenInfo);
+				// exchange.mutate().request(builder -> {
+				// 	builder.header("X-USER-ID", Long.toString(accessTokenInfo.getMembersId()));
+				// 	builder.header("X-USER-ROLE", accessTokenInfo.getRole());
+				// });
+
+				ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
+					.header("X-USER-ID", Long.toString(accessTokenInfo.getMembersId()))
+					.header("X-USER-ROLE", accessTokenInfo.getRole())
+					.build();
+
+				exchange.mutate().request(modifiedRequest).build();
 			} catch (ExpiredJwtException e) {
 				log.error("ExpiredJwtException");
 				exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
