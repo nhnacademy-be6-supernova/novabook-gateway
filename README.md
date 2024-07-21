@@ -25,7 +25,7 @@ Novabook Gateway
 
 로드밸런싱
 =========
-
+`novabook-gateway`는 Spring Cloud Gateway를 사용하여 서비스 간의 로드 밸런싱을 제공합니다. 
 
 <br>
 
