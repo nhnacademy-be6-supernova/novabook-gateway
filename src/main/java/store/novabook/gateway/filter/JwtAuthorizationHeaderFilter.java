@@ -57,7 +57,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 		return (exchange, chain) -> {
 			ServerHttpRequest request = exchange.getRequest();
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-				log.info("No Authorization");
+				log.info("인증 정보가 없습니다");
 				return chain.filter(exchange);
 			}
 			try {
@@ -66,6 +66,7 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 					accessToken = Objects.requireNonNull(request.getHeaders().get(HttpHeaders.AUTHORIZATION))
 						.getFirst().replace("Bearer ", "");
 				} else {
+					log.info("액세스 토큰이 없습니다");
 					throw new ExpiredJwtException(null, null, "No Authorization");
 				}
 
@@ -74,22 +75,24 @@ public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<J
 				AccessTokenInfo accessTokenInfo = authenticationService.getAccessToken(uuid);
 
 				if (accessTokenInfo == null) {
+					log.info("레디스에 토큰 정보가 없습니다");
 					exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
 					return exchange.getResponse().setComplete();
 				}
 
-				log.info("accessTokenInfo: {}", accessTokenInfo);
+				log.info("인증 UUID: {}, 회원 아이디: {}, 회원 권한: {}", accessTokenInfo.getUuid(),
+					accessTokenInfo.getMembersId(), accessTokenInfo.getRole());
 				exchange.mutate().request(builder -> {
 					builder.header("X-USER-ID", Long.toString(accessTokenInfo.getMembersId()));
 					builder.header("X-USER-ROLE", accessTokenInfo.getRole());
 				});
 
 			} catch (ExpiredJwtException e) {
-				log.error("ExpiredJwtException");
+				log.info("액세스토큰 만료");
 				exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
 				return exchange.getResponse().setComplete();
 			} catch (JwtException e) {
-				log.error("JwtException");
+				log.info("올바른 JWT 토큰이 아닙니다");
 				exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
 				return exchange.getResponse().setComplete();
 			}
