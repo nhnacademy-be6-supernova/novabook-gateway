@@ -3,6 +3,7 @@ package store.novabook.gateway.filter;
 import java.security.Key;
 import java.util.Objects;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.env.Environment;
@@ -28,65 +29,72 @@ import store.novabook.gateway.util.dto.JWTConfigDto;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config> {
+public class JwtAuthorizationHeaderFilter extends AbstractGatewayFilterFactory<JwtAuthorizationHeaderFilter.Config>
+	implements
+	InitializingBean {
 
 	private final AuthenticationService authenticationService;
 	private final JWTUtil jwtUtil;
 	private final Environment env;
 	private JWTConfigDto jwtConfig;
+	private Key key;
+
+	@Override
+	public void afterPropertiesSet() {
+		RestTemplate restTemplate = new RestTemplate();
+		this.jwtConfig = KeyManagerUtil.getJWTConfig(env, restTemplate);
+		key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
+	}
 
 	public static class Config {
+		public void init() {
+			//nothing
+		}
 	}
 
 	@Override
 	public GatewayFilter apply(Config config) {
-		if (Objects.isNull(jwtConfig)) {
-			RestTemplate restTemplate = new RestTemplate();
-			this.jwtConfig = KeyManagerUtil.getJWTConfig(env, restTemplate);
-		}
 		return (exchange, chain) -> {
-
 			ServerHttpRequest request = exchange.getRequest();
 			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-				log.info("No Authorization");
-			} else {
+				log.info("인증 정보가 없습니다");
+				return chain.filter(exchange);
+			}
+			try {
+				String accessToken = "";
+				if (request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+					accessToken = Objects.requireNonNull(request.getHeaders().get(HttpHeaders.AUTHORIZATION))
+						.getFirst().replace("Bearer ", "");
+				} else {
+					log.info("액세스 토큰이 없습니다");
+					throw new ExpiredJwtException(null, null, "No Authorization");
+				}
 
-				Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
+				Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken);
+				String uuid = jwtUtil.getUUID(accessToken);
+				AccessTokenInfo accessTokenInfo = authenticationService.getAccessToken(uuid);
 
-				try {
-					String accessToken = "";
-					if (request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-						accessToken = Objects.requireNonNull(request.getHeaders().get(HttpHeaders.AUTHORIZATION))
-							.getFirst().replace("Bearer ", "");
-					} else {
-						throw new ExpiredJwtException(null, null, "No Authorization");
-					}
-
-					Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken);
-
-					String uuid = jwtUtil.getUUID(accessToken);
-
-					AccessTokenInfo accessTokenInfo = authenticationService.getAccessToken(uuid);
-
-					if (accessTokenInfo == null) {
-						exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
-						return exchange.getResponse().setComplete();
-					}
-
-					exchange.mutate().request(builder -> {
-						builder.header("X-USER-ID", Long.toString(accessTokenInfo.getMembersId()));
-						builder.header("X-USER-ROLE", accessTokenInfo.getRole());
-					});
-
-				} catch (ExpiredJwtException e) {
-					log.error("ExpiredJwtException");
-					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-					return exchange.getResponse().setComplete();
-				} catch (JwtException e) {
-					log.error("JwtException");
-					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+				if (accessTokenInfo == null) {
+					log.info("레디스에 토큰 정보가 없습니다");
+					exchange.getResponse().setStatusCode(HttpStatus.SEE_OTHER);
 					return exchange.getResponse().setComplete();
 				}
+
+				log.info("인증 UUID: {}, 회원 아이디: {}, 회원 권한: {}", accessTokenInfo.getUuid(),
+					accessTokenInfo.getMembersId(), accessTokenInfo.getRole());
+				exchange.mutate().request(builder -> {
+					builder.header("X-USER-ID", Long.toString(accessTokenInfo.getMembersId()));
+					builder.header("X-USER-ROLE", accessTokenInfo.getRole());
+				});
+
+			} catch (ExpiredJwtException e) {
+				log.info("액세스토큰 만료");
+				exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+				return exchange.getResponse().setComplete();
+			} catch (JwtException e) {
+				log.info("올바른 JWT 토큰이 아닙니다");
+				exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+				return exchange.getResponse().setComplete();
 			}
 
 			return chain.filter(exchange);
