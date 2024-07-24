@@ -82,9 +82,10 @@ public class KeyManagerUtil {
 	public static JWTConfigDto getJWTConfig(Environment environment, RestTemplate restTemplate) {
 		try {
 			String keyid = environment.getProperty("nhn.cloud.keyManager.jwtKey");
-			return objectMapper.readValue(getDataSource(environment, keyid, restTemplate), JWTConfigDto.class);
+			JWTConfigDto jwtConfigDto = objectMapper.readValue(getDataSource(environment, keyid, restTemplate),
+				JWTConfigDto.class);
+			return jwtConfigDto;
 		} catch (JsonProcessingException e) {
-			//오류처리
 			throw new KeyManagerException(e.getMessage());
 		}
 	}
